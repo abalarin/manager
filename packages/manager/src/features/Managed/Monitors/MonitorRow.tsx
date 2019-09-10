@@ -1,3 +1,4 @@
+import { ManagedServiceMonitor } from 'linode-js-sdk/lib/managed/types';
 import * as React from 'react';
 import {
   createStyles,
@@ -43,7 +44,7 @@ const styles = (theme: Theme) =>
   });
 
 interface Props {
-  monitor: Linode.ManagedServiceMonitor;
+  monitor: ManagedServiceMonitor;
   openDialog: (id: number, label: string) => void;
   openDrawer: (id: number, mode: string) => void;
 }

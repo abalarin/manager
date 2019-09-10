@@ -1,3 +1,4 @@
+import { ManagedCredential } from 'linode-js-sdk/lib/managed/types';
 import { APIError } from 'linode-js-sdk/lib/types';
 import * as React from 'react';
 import { compose } from 'recompose';
@@ -9,7 +10,7 @@ import withManagedServices, {
 import MonitorTable from './MonitorTable';
 
 interface Props {
-  credentials: Linode.ManagedCredential[];
+  credentials: ManagedCredential[];
   groups: string[];
   loading: boolean;
   errorFromProps?: APIError[];

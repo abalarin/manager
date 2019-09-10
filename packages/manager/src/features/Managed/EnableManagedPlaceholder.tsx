@@ -1,4 +1,5 @@
 import { AccountSettings } from 'linode-js-sdk/lib/account';
+import { enableManaged } from 'linode-js-sdk/lib/managed';
 import { APIError } from 'linode-js-sdk/lib/types';
 import * as React from 'react';
 import ExternalLink from 'src/assets/icons/external-link.svg';
@@ -10,8 +11,6 @@ import Typography from 'src/components/core/Typography';
 import Placeholder from 'src/components/Placeholder';
 import withLinodes from 'src/containers/withLinodes.container';
 import { pluralize } from 'src/utilities/pluralize';
-
-import { enableManaged } from 'src/services/managed';
 
 export interface StateProps {
   linodeCount: number;
@@ -72,7 +71,7 @@ const ManagedPlaceholder: React.FC<CombinedProps> = props => {
       <Placeholder
         icon={ManagedIcon}
         title="Linode Managed"
-        copy={`Let us worry about your infrastructure, so you can get back to worrying about your business. 
+        copy={`Let us worry about your infrastructure, so you can get back to worrying about your business.
            Linode Managed helps keep your systems up and running with our team of Linode experts responding to monitoring events, so you can sleep well.
            Linode Managed includes 24/7 monitoring and incident responses, backups, and Longview Pro. +$100/month per Linode.`}
         buttonProps={[

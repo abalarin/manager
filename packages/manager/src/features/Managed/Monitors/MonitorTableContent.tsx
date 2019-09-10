@@ -1,3 +1,4 @@
+import { ManagedServiceMonitor } from 'linode-js-sdk/lib/managed/types';
 import * as React from 'react';
 
 import TableRowEmpty from 'src/components/TableRowEmptyState';
@@ -6,7 +7,7 @@ import TableRowLoading from 'src/components/TableRowLoading';
 import MonitorRow from './MonitorRow';
 
 interface Props {
-  monitors: Linode.ManagedServiceMonitor[];
+  monitors: ManagedServiceMonitor[];
   loading: boolean;
   openDialog: (id: number, label: string) => void;
   openDrawer: (id: number, mode: string) => void;
@@ -36,7 +37,7 @@ export const MonitorTableContent: React.FC<CombinedProps> = props => {
 
   return (
     <>
-      {monitors.map((monitor: Linode.ManagedServiceMonitor, idx: number) => (
+      {monitors.map((monitor: ManagedServiceMonitor, idx: number) => (
         <MonitorRow
           key={`service-monitor-row-${idx}`}
           monitor={monitor}
