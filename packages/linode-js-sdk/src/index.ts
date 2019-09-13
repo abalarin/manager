@@ -18,4 +18,10 @@ export * from './linodes';
 
 export * from './managed';
 
+export * from './authentication';
+
+export * from './kubernetes';
+
+export * from './firewalls';
+
 export { baseRequest } from './request';

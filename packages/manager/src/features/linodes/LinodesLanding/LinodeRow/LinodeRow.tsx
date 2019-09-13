@@ -167,11 +167,6 @@ export const LinodeRow: React.StatelessComponent<CombinedProps> = props => {
             </>
           )}
         </TableCell>
-        <LinodeRowBackupCell
-          linodeId={id}
-          backupsEnabled={backups.enabled || false}
-          mostRecentBackup={mostRecentBackup || ''}
-        />
         <TableCell
           parentColumn="IP Address"
           className={classes.ipCell}
@@ -188,6 +183,11 @@ export const LinodeRow: React.StatelessComponent<CombinedProps> = props => {
         >
           <RegionIndicator region={region} />
         </TableCell>
+        <LinodeRowBackupCell
+          linodeId={id}
+          backupsEnabled={backups.enabled || false}
+          mostRecentBackup={mostRecentBackup || ''}
+        />
         <TableCell className={classes.actionCell} data-qa-notifications>
           <div className={classes.actionInner}>
             <RenderFlag
