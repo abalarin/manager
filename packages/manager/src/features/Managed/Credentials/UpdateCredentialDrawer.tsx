@@ -6,6 +6,7 @@ import ActionsPanel from 'src/components/ActionsPanel';
 import Button from 'src/components/Button';
 import Drawer from 'src/components/Drawer';
 import Notice from 'src/components/Notice';
+import PasswordInput from 'src/components/PasswordInput';
 import TextField from 'src/components/TextField';
 
 import { updateLabelSchema, updatePasswordSchema } from './credential.schema';
@@ -143,7 +144,7 @@ const CredentialDrawer: React.FC<CombinedProps> = props => {
                 onBlur={handleBlur}
               />
 
-              <TextField
+              <PasswordInput
                 name="password"
                 label="Password / Passphrase"
                 type="password"
@@ -153,6 +154,9 @@ const CredentialDrawer: React.FC<CombinedProps> = props => {
                 errorText={errors.password}
                 onChange={handleChange}
                 onBlur={handleBlur}
+                // This credential could be anything so might be counterproductive to validate strength
+                hideHelperText
+                hideValidation
               />
 
               <ActionsPanel>

@@ -1,4 +1,4 @@
-import { LinodeTypeClass } from 'linode-js-sdk/lib/linodes'
+import { LinodeTypeClass } from 'linode-js-sdk/lib/linodes';
 import { APIError } from 'linode-js-sdk/lib/types';
 import * as React from 'react';
 import { GPUError } from 'src/components/GPUError';
@@ -40,6 +40,8 @@ export const interceptGPUErrors = (
 interface Intercept {
   condition: (e: APIError) => boolean;
   replacementText: JSX.Element | string;
+  /** optional callback to fire when error is matched correctly */
+  callback?: Function;
 }
 
 export const interceptErrors = (
@@ -52,6 +54,9 @@ export const interceptErrors = (
         acc = {
           reason: eachInterceptor.replacementText as string
         };
+        if (eachInterceptor.callback) {
+          eachInterceptor.callback();
+        }
       }
       return acc;
     }, thisError);

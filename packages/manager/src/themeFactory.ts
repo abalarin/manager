@@ -200,6 +200,7 @@ const themeDefaults: ThemeDefaults = ({ spacingOverride: spacingUnit }) => {
       grey4: '#8C929D',
       white: '#fff',
       black: '#222',
+      blue: primaryColors.main,
       offBlack: primaryColors.offBlack,
       boxShadow: '#ddd',
       boxShadowDark: '#aaa',
@@ -720,21 +721,6 @@ const themeDefaults: ThemeDefaults = ({ spacingOverride: spacingUnit }) => {
           marginRight: 0
         }
       },
-      MuiRadio: {
-        root: {
-          '& $checked': {
-            color: primaryColors.main
-          },
-          color: primaryColors.main
-        },
-        checked: {},
-        colorSecondary: {
-          color: primaryColors.main,
-          '&$checked': {
-            color: primaryColors.main
-          }
-        }
-      },
       MuiInput: {
         root: {
           '&$disabled': {
@@ -744,7 +730,10 @@ const themeDefaults: ThemeDefaults = ({ spacingOverride: spacingUnit }) => {
           },
           '&$focused': {
             borderColor: primaryColors.main,
-            boxShadow: '0 0 2px 1px #e1edfa'
+            boxShadow: '0 0 2px 1px #e1edfa',
+            '& .select-option-icon': {
+              paddingLeft: `30px !important`
+            }
           },
           '&$error': {
             borderColor: '#ca0813'
@@ -819,6 +808,11 @@ const themeDefaults: ThemeDefaults = ({ spacingOverride: spacingUnit }) => {
         },
         shrink: {
           transform: 'none'
+        }
+      },
+      MuiLinearProgress: {
+        colorPrimary: {
+          backgroundColor: '#b7d6f9'
         }
       },
       MuiList: {
@@ -938,6 +932,21 @@ const themeDefaults: ThemeDefaults = ({ spacingOverride: spacingUnit }) => {
           minWidth: 200,
           [breakpoints.up('lg')]: {
             minWidth: 250
+          }
+        }
+      },
+      MuiRadio: {
+        root: {
+          '& $checked': {
+            color: primaryColors.main
+          },
+          color: primaryColors.main
+        },
+        checked: {},
+        colorSecondary: {
+          color: primaryColors.main,
+          '&$checked': {
+            color: primaryColors.main
           }
         }
       },
@@ -1167,18 +1176,13 @@ const themeDefaults: ThemeDefaults = ({ spacingOverride: spacingUnit }) => {
         root: {
           margin: `${spacingUnit * 2}px 0`,
           boxShadow: 'inset 0 -1px 0 #c5c6c8',
-          minHeight: spacingUnit * 6
-        },
-        fixed: {
-          overflowX: 'auto'
-        },
-        flexContainer: {
+          minHeight: spacingUnit * 6,
           position: 'relative',
           '& $scrollButtons:first-child': {
             position: 'absolute',
             bottom: 6,
             zIndex: 2,
-            left: -9,
+            left: 0,
             '& svg': {
               backgroundColor: 'rgba(232, 232, 232, .9)',
               height: 39,
@@ -1196,6 +1200,9 @@ const themeDefaults: ThemeDefaults = ({ spacingOverride: spacingUnit }) => {
               borderRadius: '50%'
             }
           }
+        },
+        fixed: {
+          overflowX: 'auto'
         },
         scrollButtons: {
           flex: '0 0 40px'

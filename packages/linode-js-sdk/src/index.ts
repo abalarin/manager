@@ -16,12 +16,14 @@ export * from './tags';
 
 export * from './linodes';
 
-export * from './managed';
-
-export * from './authentication';
+export * from './managed'
 
 export * from './kubernetes';
 
 export * from './firewalls';
+
+export * from './stackscripts';
+
+export * from './regions';
 
 export { baseRequest } from './request';

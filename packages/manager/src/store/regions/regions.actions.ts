@@ -1,31 +1,15 @@
-import { getRegions } from 'src/services/misc';
+import { getRegions, Region } from 'linode-js-sdk/lib/regions';
 import { actionCreatorFactory } from 'typescript-fsa';
-import { ThunkActionCreator } from '../types';
+import { createRequestThunk } from '../store.helpers';
 
 const actionCreator = actionCreatorFactory(`@@manager/regions`);
 
 export const regionsRequestActions = actionCreator.async<
   void,
-  Linode.Region[],
+  Region[],
   Linode.ApiFieldError[]
 >(`request`);
 
-export const requestRegions: ThunkActionCreator<
-  Promise<Linode.Region[]>
-> = () => dispatch => {
-  dispatch(regionsRequestActions.started());
-
-  return getRegions()
-    .then(({ data }) => {
-      dispatch(
-        regionsRequestActions.done({
-          result: data
-        })
-      );
-      return data;
-    })
-    .catch(error => {
-      dispatch(regionsRequestActions.failed({ error }));
-      return error;
-    });
-};
+export const requestRegions = createRequestThunk(regionsRequestActions, () =>
+  getRegions().then(response => response.data)
+);

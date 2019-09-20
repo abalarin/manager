@@ -1,5 +1,5 @@
 import { Entity, Event } from 'linode-js-sdk/lib/account';
-import { Linode, LinodeType } from "linode-js-sdk/lib/linodes";
+import { Linode, LinodeType } from 'linode-js-sdk/lib/linodes';
 import { compose, path, pathOr, prop, sortBy, take } from 'ramda';
 import * as React from 'react';
 import { connect } from 'react-redux';
@@ -125,9 +125,16 @@ class LinodesDashboardCard extends React.Component<CombinedProps> {
   };
 
   renderErrors = (errors: Linode.ApiFieldError[]) => {
-    let errorText = pathOr('Unable to load Linodes.', [0, 'reason'], errors);
+    let errorText: string | JSX.Element = pathOr(
+      'Unable to load Linodes.',
+      [0, 'reason'],
+      errors
+    );
 
-    if (errorText.toLowerCase() === 'this linode has been suspended') {
+    if (
+      typeof errorText === 'string' &&
+      errorText.toLowerCase() === 'this linode has been suspended'
+    ) {
       errorText = (
         <React.Fragment>
           One or more of your Linodes is suspended. Please{' '}
