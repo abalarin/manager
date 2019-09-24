@@ -1,23 +1,35 @@
-import { ManagedServiceMonitor } from 'linode-js-sdk/lib/managed/types';
+import { ManagedServiceMonitor } from 'linode-js-sdk/lib/managed';
 import * as React from 'react';
 
 import TableRowEmpty from 'src/components/TableRowEmptyState';
 import TableRowError from 'src/components/TableRowError';
 import TableRowLoading from 'src/components/TableRowLoading';
+import { ExtendedIssue } from 'src/store/managed/issues.actions';
+
 import MonitorRow from './MonitorRow';
 
 interface Props {
   monitors: ManagedServiceMonitor[];
+  issues: ExtendedIssue[];
   loading: boolean;
   openDialog: (id: number, label: string) => void;
-  openDrawer: (id: number, mode: string) => void;
+  openHistoryDrawer: (id: number, label: string) => void;
+  openMonitorDrawer: (id: number, mode: string) => void;
   error?: Linode.ApiFieldError[];
 }
 
 export type CombinedProps = Props;
 
 export const MonitorTableContent: React.FC<CombinedProps> = props => {
-  const { error, loading, monitors, openDialog, openDrawer } = props;
+  const {
+    error,
+    issues,
+    loading,
+    monitors,
+    openDialog,
+    openHistoryDrawer,
+    openMonitorDrawer
+  } = props;
   if (loading) {
     return <TableRowLoading colSpan={12} />;
   }
@@ -41,8 +53,10 @@ export const MonitorTableContent: React.FC<CombinedProps> = props => {
         <MonitorRow
           key={`service-monitor-row-${idx}`}
           monitor={monitor}
+          issues={issues.filter(i => i.services.includes(monitor.id))}
           openDialog={openDialog}
-          openDrawer={openDrawer}
+          openMonitorDrawer={openMonitorDrawer}
+          openHistoryDrawer={openHistoryDrawer}
         />
       ))}
     </>

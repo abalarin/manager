@@ -1,4 +1,4 @@
-import { MonitorStatus } from 'linode-js-sdk/lib/managed/types';
+import { MonitorStatus } from 'linode-js-sdk/lib/managed';
 import { withSnackbar, WithSnackbarProps } from 'notistack';
 import * as React from 'react';
 import { compose } from 'recompose';
@@ -14,7 +14,8 @@ interface Props {
   status: MonitorStatus;
   label: string;
   openDialog: (id: number, label: string) => void;
-  openDrawer: (id: number, mode: string) => void;
+  openMonitorDrawer: (id: number, mode: string) => void;
+  openHistoryDrawer: (id: number, label: string) => void;
 }
 
 export type CombinedProps = Props & DispatchProps & WithSnackbarProps;
@@ -28,7 +29,8 @@ export class MonitorActionMenu extends React.Component<CombinedProps, {}> {
       label,
       monitorID,
       openDialog,
-      openDrawer,
+      openHistoryDrawer,
+      openMonitorDrawer,
       status
     } = this.props;
 
@@ -71,9 +73,16 @@ export class MonitorActionMenu extends React.Component<CombinedProps, {}> {
               }
             },
         {
+          title: 'View Issue History',
+          onClick: () => {
+            openHistoryDrawer(monitorID, label);
+            closeMenu();
+          }
+        },
+        {
           title: 'Edit',
           onClick: () => {
-            openDrawer(monitorID, 'edit');
+            openMonitorDrawer(monitorID, 'edit');
             closeMenu();
           }
         },

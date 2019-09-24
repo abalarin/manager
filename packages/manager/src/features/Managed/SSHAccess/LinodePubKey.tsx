@@ -1,6 +1,5 @@
 import * as copy from 'copy-to-clipboard';
-import { getSSHPubKey } from 'linode-js-sdk/lib/managed';
-import { ManagedSSHPubKey } from 'linode-js-sdk/lib/managed/types';
+import { getSSHPubKey, ManagedSSHPubKey } from 'linode-js-sdk/lib/managed';
 import * as React from 'react';
 import SSHKeyIcon from 'src/assets/icons/ssh-key.svg';
 import Button from 'src/components/Button';
@@ -146,7 +145,6 @@ const LinodePubKey: React.FC<{}> = props => {
             md={3}
             lg={2}
             className={classes.copyToClipboard}
-            justify="flex-end"
           >
             {/* @todo: Should we include an indication that the key was successfully copied? */}
             <Button buttonType="secondary" onClick={() => copy(data.ssh_key)}>

@@ -1,5 +1,7 @@
-import { ManagedServicePayload } from 'linode-js-sdk/lib/managed';
-import { ManagedServiceMonitor } from 'linode-js-sdk/lib/managed/types';
+import {
+  ManagedServiceMonitor,
+  ManagedServicePayload
+} from 'linode-js-sdk/lib/managed';
 import { connect, MapDispatchToProps } from 'react-redux';
 import { AnyAction } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -48,7 +50,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, {}> = (
 });
 
 export default <TInner extends {}, TOuter extends {}>(
-  mapManagedServicesToProps: (
+  mapManagedServicesToProps?: (
     ownProps: TOuter,
     managedLoading: boolean,
     lastUpdated: number,
@@ -63,13 +65,23 @@ export default <TInner extends {}, TOuter extends {}>(
       const managedError = state.__resources.managed.error;
       const lastUpdated = state.__resources.managed.lastUpdated;
 
-      return mapManagedServicesToProps(
-        ownProps,
-        managedLoading,
-        lastUpdated,
+      if (mapManagedServicesToProps) {
+        return mapManagedServicesToProps(
+          ownProps,
+          managedLoading,
+          lastUpdated,
+          monitors,
+          managedError
+        );
+      }
+
+      return {
+        ...ownProps,
         monitors,
-        managedError
-      );
+        managedLoading,
+        managedError,
+        lastUpdated
+      };
     },
     mapDispatchToProps
   );
