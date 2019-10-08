@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import { makeStyles, Theme } from 'src/components/core/styles';
 import Typography from 'src/components/core/Typography';
 import EntityIcon from 'src/components/EntityIcon';
@@ -11,6 +11,11 @@ import TableRow from 'src/components/TableRow';
 // import { generateObjectUrl } from '../utilities';
 
 const useStyles = makeStyles((theme: Theme) => ({
+  manuallyCreated: {
+    '&:before': {
+      backgroundColor: theme.bg.lightBlue
+    }
+  },
   folderNameWrapper: {
     display: 'flex',
     flexFlow: 'row nowrap',
@@ -24,21 +29,26 @@ const useStyles = makeStyles((theme: Theme) => ({
 interface Props {
   folderName: string;
   displayName: string;
+  manuallyCreated: boolean;
 }
 
-type CombinedProps = Props & RouteComponentProps<{}>;
+const FolderTableRow: React.FC<Props> = props => {
+  const { folderName, displayName, manuallyCreated } = props;
 
-const FolderTableRow: React.FC<CombinedProps> = props => {
-  const { folderName, displayName } = props;
+  const history = useHistory();
 
   const classes = useStyles();
 
   const handleClick = () => {
-    props.history.push({ search: `?prefix=${folderName}` });
+    history.push({ search: `?prefix=${folderName}` });
   };
 
   return (
-    <TableRow key={folderName} rowLink={handleClick}>
+    <TableRow
+      className={manuallyCreated ? classes.manuallyCreated : ''}
+      key={folderName}
+      rowLink={handleClick}
+    >
       <TableCell parentColumn="Object">
         <Grid container wrap="nowrap" alignItems="center">
           <Grid item className={classes.iconWrapper}>
@@ -61,4 +71,4 @@ const FolderTableRow: React.FC<CombinedProps> = props => {
   );
 };
 
-export default withRouter(FolderTableRow);
+export default React.memo(FolderTableRow);

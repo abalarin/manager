@@ -1,3 +1,4 @@
+import { ResourcePage } from 'linode-js-sdk/lib/types';
 import { BETA_API_ROOT } from 'src/constants';
 import Request, {
   setData,
@@ -8,7 +9,7 @@ import Request, {
 } from '../index';
 import { CreateBucketSchema } from './buckets.schema';
 
-type Page<T> = Linode.ResourcePage<T>;
+type Page<T> = ResourcePage<T>;
 
 export interface BucketRequestPayload {
   label: string;
@@ -18,7 +19,6 @@ export interface BucketRequestPayload {
 export interface DeleteBucketRequestPayload {
   cluster: string;
   label: string;
-  params?: { force: number };
 }
 
 /**
@@ -54,19 +54,11 @@ export const createBucket = (data: BucketRequestPayload) =>
  *
  * Removes a Bucket from your account.
  *
- * NOTE: By default, attempting to delete a non-empty bucket
- * will result in an error. Passing `force: 1` as a param will
- * delete every item in the bucket, then delete the bucket itself.
- *
+ * NOTE: Attempting to delete a non-empty bucket will result in an error.
  */
-export const deleteBucket = ({
-  cluster,
-  label,
-  params
-}: DeleteBucketRequestPayload) =>
+export const deleteBucket = ({ cluster, label }: DeleteBucketRequestPayload) =>
   Request<Linode.Bucket>(
     setURL(`${BETA_API_ROOT}/object-storage/buckets/${cluster}/${label}`),
-    setParams(params),
     setMethod('DELETE')
   );
 
@@ -76,6 +68,12 @@ export interface ObjectListParams {
   prefix?: string;
   page_size?: number;
 }
+
+export interface ObjectListResponse {
+  data: Linode.Object[];
+  next_marker: string | null;
+  is_truncated: boolean;
+}
 /**
  * Returns a list of Objects in a given Bucket.
  */
@@ -84,7 +82,7 @@ export const getObjectList = (
   bucketName: string,
   params?: ObjectListParams
 ) =>
-  Request<{ data: Linode.Object[] }>(
+  Request<ObjectListResponse>(
     setMethod('GET'),
     setParams(params),
     setURL(

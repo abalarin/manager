@@ -221,6 +221,14 @@ export const sendDeleteBucketEvent = (eventLabel: string) => {
   });
 };
 
+export const sendDeleteBucketFailedEvent = (eventLabel: string) => {
+  sendEvent({
+    category: 'Object Storage',
+    action: 'Delete Bucket Failed',
+    label: eventLabel
+  });
+};
+
 // AccessKeyLanding.tsx
 export const sendCreateAccessKeyEvent = () => {
   sendEvent({
@@ -301,5 +309,20 @@ export const sendDomainStatusChangeEvent = (action: 'Enable' | 'Disable') => {
   return sendEvent({
     category: 'Domain Status Change',
     action
+  });
+};
+
+export const sendDownloadObjectEvent = () => {
+  sendEvent({
+    category: 'Object Storage',
+    action: 'Download Object'
+  });
+};
+
+export const sendObjectsQueuedForUploadEvent = (numObjects: number) => {
+  sendEvent({
+    category: 'Object Storage',
+    action: 'Objects queued for upload',
+    label: `${numObjects} objects`
   });
 };

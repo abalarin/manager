@@ -59,6 +59,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     display: '-webkit-box',
     WebkitLineClamp: 3,
     WebkitBoxOrient: 'vertical',
+    transition: 'all 1s ease-in',
     overflow: 'hidden',
     wordBreak: 'break-all',
     fontFamily: '"Ubuntu Mono", monospace, sans-serif',
@@ -73,17 +74,22 @@ const useStyles = makeStyles((theme: Theme) => ({
     [theme.breakpoints.up('xl')]: {
       paddingRight: theme.spacing(4),
       paddingLeft: theme.spacing(4)
+    },
+    '&:hover': {
+      transition: 'all 1s ease-in',
+      WebkitLineClamp: 'unset'
     }
   },
   copyToClipboard: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     display: 'flex',
     justifyContent: 'flex-start',
     [theme.breakpoints.up('sm')]: {
       justifyContent: 'flex-end'
     },
     '& > button': {
-      minWidth: 190
+      minWidth: 190,
+      marginTop: theme.spacing(1)
     }
   }
 }));
@@ -95,6 +101,23 @@ const LinodePubKey: React.FC<{}> = props => {
     getSSHPubKey,
     { ssh_key: '' }
   );
+  const [copied, setCopied] = React.useState<boolean>(false);
+  let timeout: NodeJS.Timeout;
+
+  React.useEffect(() => {
+    if (copied) {
+      timeout = setTimeout(() => {
+        setCopied(false);
+      }, 1000);
+    }
+
+    return () => clearTimeout(timeout);
+  }, [copied]);
+
+  const handleCopy = () => {
+    setCopied(true);
+    copy(data.ssh_key);
+  };
 
   if (error) {
     const errorMessage = getErrorStringOrDefault(error);
@@ -146,9 +169,8 @@ const LinodePubKey: React.FC<{}> = props => {
             lg={2}
             className={classes.copyToClipboard}
           >
-            {/* @todo: Should we include an indication that the key was successfully copied? */}
-            <Button buttonType="secondary" onClick={() => copy(data.ssh_key)}>
-              Copy to clipboard
+            <Button buttonType="secondary" onClick={handleCopy}>
+              {!copied ? 'Copy to clipboard' : 'Copied!'}
             </Button>
           </Grid>
         </Grid>

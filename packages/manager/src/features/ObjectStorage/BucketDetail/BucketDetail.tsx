@@ -1,8 +1,10 @@
 import { APIError } from 'linode-js-sdk/lib/types';
+import { withSnackbar, WithSnackbarProps } from 'notistack';
 import { prop, sortBy } from 'ramda';
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import Waypoint from 'react-waypoint';
+import { compose } from 'recompose';
 import ActionsPanel from 'src/components/ActionsPanel';
 import Breadcrumb from 'src/components/Breadcrumb';
 import Button from 'src/components/Button';
@@ -27,11 +29,17 @@ import TableRow from 'src/components/TableRow';
 import { OBJECT_STORAGE_DELIMITER as delimiter } from 'src/constants';
 import { getObjectList } from 'src/services/objectStorage/buckets';
 import { getObjectURL } from 'src/services/objectStorage/objects';
+import { sendDownloadObjectEvent } from 'src/utilities/ga';
 import { getQueryParam } from 'src/utilities/queryParams';
 import { truncateMiddle } from 'src/utilities/truncate';
 import ObjectUploader from '../ObjectUploader';
 import { deleteObject } from '../requests';
-import { displayName, ExtendedObject, extendObject } from '../utilities';
+import {
+  displayName,
+  ExtendedObject,
+  extendObject,
+  tableUpdateAction
+} from '../utilities';
 import BucketBreadcrumb from './BucketBreadcrumb';
 import ObjectTableContent from './ObjectTableContent';
 
@@ -94,12 +102,15 @@ interface MatchProps {
   bucketName: string;
 }
 
-type CombinedProps = RouteComponentProps<MatchProps> & WithStyles<ClassNames>;
+type CombinedProps = RouteComponentProps<MatchProps> &
+  WithStyles<ClassNames> &
+  WithSnackbarProps;
 
 interface State {
   data: ExtendedObject[];
   loading: boolean;
   allObjectsFetched: boolean;
+  nextMarker: string | null;
   deleteObjectDialogOpen: boolean;
   deleteObjectLoading: boolean;
   deleteObjectError?: string;
@@ -113,6 +124,7 @@ export class BucketDetail extends React.Component<CombinedProps, {}> {
     data: [],
     loading: false,
     allObjectsFetched: false,
+    nextMarker: null,
     deleteObjectDialogOpen: false,
     deleteObjectLoading: false,
     generalError: undefined,
@@ -124,7 +136,6 @@ export class BucketDetail extends React.Component<CombinedProps, {}> {
     const prefix = getQueryParam(this.props.location.search, 'prefix');
 
     this.setState({
-      allObjectsFetched: false,
       loading: true,
       generalError: undefined,
       nextPageError: undefined,
@@ -135,20 +146,19 @@ export class BucketDetail extends React.Component<CombinedProps, {}> {
       .then(response => {
         // If there are less results than the page size we requested, we know
         // we've reached the end of the bucket (or folder).
-        const allObjectsFetched =
-          response.data.length < page_size ? true : false;
+        const allObjectsFetched = !response.is_truncated;
 
         // @todo @tdt: Extract this data-manipulation logic out of this
         // component and test.
         const extendedData = response.data.map(object =>
           extendObject(object, prefix)
         );
-        const sortedData = sortBy(prop('name'))(extendedData);
 
         this.setState({
           loading: false,
-          data: sortedData,
-          allObjectsFetched
+          data: extendedData,
+          allObjectsFetched,
+          nextMarker: response.next_marker
         });
       })
       .catch(err => {
@@ -173,9 +183,11 @@ export class BucketDetail extends React.Component<CombinedProps, {}> {
   }
 
   getNextPage = () => {
-    const { data } = this.state;
-    const tail = data[data.length - 1];
-    if (!tail) {
+    const { nextMarker } = this.state;
+
+    // If we don't have a nextMarker, there isn't another page to get.
+    // This probably won't happen.
+    if (!nextMarker) {
       return;
     }
 
@@ -193,14 +205,11 @@ export class BucketDetail extends React.Component<CombinedProps, {}> {
       // `marker` is used for Object Storage pagination. It is the name of
       // the last file of the current set. Specifying a marker will get you
       // the next page of objects after the marker.
-      marker: tail.name,
+      marker: nextMarker,
       page_size
     })
       .then(response => {
-        // If there are less results than the page size we requested, we know
-        // we've reached the end of the bucket (or folder).
-        const allObjectsFetched =
-          response.data.length < page_size ? true : false;
+        const allObjectsFetched = !response.is_truncated;
 
         // @todo @tdt: Extract this data-manipulation logic out of this
         // component and test.
@@ -212,7 +221,8 @@ export class BucketDetail extends React.Component<CombinedProps, {}> {
         this.setState({
           loading: false,
           data: [...this.state.data, ...sortedData],
-          allObjectsFetched
+          allObjectsFetched,
+          nextMarker: response.next_marker
         });
       })
       .catch(err => {
@@ -221,6 +231,31 @@ export class BucketDetail extends React.Component<CombinedProps, {}> {
           nextPageError: err
         });
       });
+  };
+
+  handleDownload = async (objectName: string, newTab = false) => {
+    const { clusterId, bucketName } = this.props.match.params;
+
+    try {
+      const { url } = await getObjectURL(
+        clusterId,
+        bucketName,
+        objectName,
+        'GET'
+      );
+
+      sendDownloadObjectEvent();
+
+      if (newTab) {
+        window.open(url, '_blank', 'noopener');
+      } else {
+        window.location.assign(url);
+      }
+    } catch (err) {
+      this.props.enqueueSnackbar('Error downloading Object', {
+        variant: 'error'
+      });
+    }
   };
 
   handleClickDelete = (objectName: string) => {
@@ -277,27 +312,76 @@ export class BucketDetail extends React.Component<CombinedProps, {}> {
     }
   };
 
+  maybeAddObjectToTable = (path: string, sizeInBytes: number) => {
+    const prefix = getQueryParam(this.props.location.search, 'prefix');
+    const action = tableUpdateAction(prefix, path);
+    if (action) {
+      if (action.type === 'FILE') {
+        this.addOneFile(action.name, sizeInBytes);
+      } else {
+        this.addOneFolder(action.name);
+      }
+    }
+  };
+
+  addOneFile = (objectName: string, sizeInBytes: number) => {
+    const prefix = getQueryParam(this.props.location.search, 'prefix');
+
+    const object: Linode.Object = {
+      name: prefix + objectName,
+      etag: '',
+      owner: '',
+      last_modified: new Date().toISOString(),
+      size: sizeInBytes
+    };
+
+    const extendedObject = extendObject(object, prefix, true);
+
+    const updatedFiles = [...this.state.data];
+
+    // If the file already exists in `data` (i.e. if the file is being
+    // overwritten), move it from its current location to the front.
+    const idx = updatedFiles.findIndex(
+      file => file.name === prefix + objectName
+    );
+    if (idx > -1) {
+      updatedFiles.splice(idx, 1);
+      updatedFiles.unshift(extendedObject);
+      this.setState({ data: updatedFiles });
+    } else {
+      this.setState({
+        data: [extendedObject, ...this.state.data]
+      });
+    }
+  };
+
+  addOneFolder = (objectName: string) => {
+    const prefix = getQueryParam(this.props.location.search, 'prefix');
+
+    const folder: Linode.Object = {
+      name: prefix + objectName + '/',
+      etag: null,
+      owner: null,
+      last_modified: null,
+      size: null
+    };
+
+    const extendedFolder = extendObject(folder, prefix, true);
+
+    const idx = this.state.data.findIndex(
+      object => object.name === prefix + objectName + '/'
+    );
+    // If the folder isn't already in `data`, add it to the front.
+    if (idx === -1) {
+      this.setState({ data: [extendedFolder, ...this.state.data] });
+    }
+  };
+
   closeDeleteObjectDialog = () => {
     this.setState({
       deleteObjectDialogOpen: false
     });
   };
-
-  updateInPlace() {
-    const { bucketName, clusterId } = this.props.match.params;
-    const prefix = getQueryParam(this.props.location.search, 'prefix');
-
-    // @todo: If there are exactly 100 objects already, what do we do? Set a marker?
-    getObjectList(clusterId, bucketName, { delimiter, prefix, page_size }).then(
-      response => {
-        // Replace the old data with the new data.
-        this.setState({
-          data: response.data.map(object => extendObject(object, prefix))
-        });
-      }
-    );
-    // @todo: Do we need to catch this?
-  }
 
   render() {
     const { classes } = this.props;
@@ -324,7 +408,7 @@ export class BucketDetail extends React.Component<CombinedProps, {}> {
       <>
         <Box display="flex" flexDirection="row" justifyContent="space-between">
           <Breadcrumb
-            // The actual pathname doesn't match what we want in the Breadcrumb,
+            // The actual pathname doesn't match what we want` in the Breadcrumb,
             // so we create a custom one.
             pathname={`/object-storage/${bucketName}`}
             crumbOverrides={[
@@ -351,13 +435,17 @@ export class BucketDetail extends React.Component<CombinedProps, {}> {
               clusterId={clusterId}
               bucketName={bucketName}
               prefix={prefix}
-              update={() => this.updateInPlace()}
+              maybeAddObjectToTable={this.maybeAddObjectToTable}
             />
           </Grid>
           <Grid item xs={12} lg={8} className={classes.tableContainer}>
             <>
               <Paper className={classes.objectTable}>
-                <Table removeLabelonMobile aria-label="List of Bucket Objects">
+                <Table
+                  removeLabelonMobile
+                  aria-label="List of Bucket Objects"
+                  isResponsive={false}
+                >
                   <TableHead>
                     <TableRow>
                       <TableCell className={classes.nameColumn}>
@@ -375,13 +463,14 @@ export class BucketDetail extends React.Component<CombinedProps, {}> {
                       loading={loading}
                       error={generalError}
                       prefix={prefix}
+                      handleClickDownload={this.handleDownload}
                       handleClickDelete={this.handleClickDelete}
                     />
                   </TableBody>
                 </Table>
                 {/* We shouldn't allow infinite scrolling if we're still loading,
-              if we've gotten all objects in the bucket (or folder), or if there
-              are errors. */}
+                if we've gotten all objects in the bucket (or folder), or if there
+                are errors. */}
                 {!loading &&
                   !allObjectsFetched &&
                   !generalError &&
@@ -404,8 +493,7 @@ export class BucketDetail extends React.Component<CombinedProps, {}> {
                 </Typography>
               )}
 
-              {/* Only display this message if there were more than 100 objects. */}
-              {allObjectsFetched && numOfDisplayedObjects > 100 && (
+              {allObjectsFetched && numOfDisplayedObjects >= 100 && (
                 <Typography variant="subtitle2" className={classes.footer}>
                   Showing all {numOfDisplayedObjects} items
                 </Typography>
@@ -452,4 +540,9 @@ export class BucketDetail extends React.Component<CombinedProps, {}> {
 
 const styled = withStyles(styles);
 
-export default styled(BucketDetail);
+const enhanced = compose<CombinedProps, {}>(
+  styled,
+  withSnackbar
+);
+
+export default enhanced(BucketDetail);

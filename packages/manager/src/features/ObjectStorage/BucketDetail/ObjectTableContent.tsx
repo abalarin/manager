@@ -14,11 +14,19 @@ interface Props {
   loading: boolean;
   error?: APIError[];
   prefix: string;
+  handleClickDownload: (objectName: string, newTab: boolean) => void;
   handleClickDelete: (objectName: string) => void;
 }
 
 const ObjectTableContent: React.FC<Props> = props => {
-  const { data, loading, error, prefix, handleClickDelete } = props;
+  const {
+    data,
+    loading,
+    error,
+    prefix,
+    handleClickDownload,
+    handleClickDelete
+  } = props;
 
   const { width } = useWindowDimensions();
 
@@ -75,6 +83,7 @@ const ObjectTableContent: React.FC<Props> = props => {
               key={object.name}
               folderName={object.name}
               displayName={truncateEnd(object._displayName, maxNameWidth)}
+              manuallyCreated={object._manuallyCreated}
             />
           );
         }
@@ -82,7 +91,8 @@ const ObjectTableContent: React.FC<Props> = props => {
         return (
           <ObjectTableRow
             key={object.name}
-            objectName={truncateMiddle(object._displayName, maxNameWidth)}
+            displayName={truncateMiddle(object._displayName, maxNameWidth)}
+            fullName={object.name}
             /**
              * In reality, if there's no `size` or `last_modified`, we're
              * probably dealing with a folder and will have already returned
@@ -91,7 +101,9 @@ const ObjectTableContent: React.FC<Props> = props => {
              */
             objectSize={object.size || 0}
             objectLastModified={object.last_modified || ''}
-            handleClickDelete={() => handleClickDelete(object.name)}
+            manuallyCreated={object._manuallyCreated}
+            handleClickDownload={handleClickDownload}
+            handleClickDelete={handleClickDelete}
           />
         );
       })}
